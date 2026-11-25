@@ -1,4 +1,4 @@
-# SolarWise AI — Solar multi-vendor commerce + agent platform
+# Havaa Tech AI — Solar multi-vendor commerce + agent platform
 
 A runnable MVP scaffold based on the uploaded MarketWise proposal, adapted to solar commerce. Frontend: React + Vite + Tailwind. Backend: FastAPI + SQLAlchemy/SQLite + JWT. Agent layer: LangGraph/LangChain with Gemini 3.8 Flash primary and provider/model fallbacks. Qdrant is optional; local keyword retrieval works without it.
 
