@@ -1,0 +1,10 @@
+backend:
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m app.seed
+python -m uvicorn app.main:app --reload --port 8000
+
+front end:
+npm install
+npm run dev
