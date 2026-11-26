@@ -47,7 +47,7 @@ def answer_with_model(prompt):
         try: return llm.invoke(prompt).content
         except Exception: continue
     return None
-
+# For Solar Load
 def estimate_solar_load(message: str):
     """Transparent illustrative sizing; ask for actual wattage/runtime before final design."""
     q=message.lower()

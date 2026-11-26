@@ -14,20 +14,24 @@ class VendorCasesInput(BaseModel): status:str|None=None
 def search_policies(db:Session, args:SearchPoliciesInput):
     # Vendor filter is resolved from trusted order context by caller; never from arbitrary buyer text.
     return [{'vendor':p['vendor'],'document':p['document'],'section':p['section'],'text':p['text']} for p in retrieve_policy(args.question,args.vendor)]
+
 def get_order(db:Session, buyer_id:int, args:GetOrderInput):
     o=db.query(Order).filter_by(id=args.order_id,buyer_id=buyer_id).first()
     if not o:return {'error':'Order not found or not owned by current buyer'}
     return {'id':o.id,'status':o.status,'total':o.total,'items':o.items_json,'vendor_id':o.vendor_id}
+
 def list_my_orders(db:Session,buyer_id:int,args:ListMyOrdersInput):
     q=db.query(Order).filter_by(buyer_id=buyer_id)
     if args.status:q=q.filter_by(status=args.status)
     return [{'id':o.id,'status':o.status,'total':o.total} for o in q.order_by(Order.id.desc()).limit(20)]
+
 def check_return_eligibility(db:Session,buyer_id:int,args:CheckEligibilityInput):
     o=db.query(Order).filter_by(id=args.order_id,buyer_id=buyer_id).first()
     if not o:return {'eligible':False,'reason':'Order not found or not owned by current buyer'}
     existing=db.query(ReturnCase).filter_by(order_id=o.id,buyer_id=buyer_id).first()
     if existing:return {'eligible':False,'reason':f'Existing case #{existing.id} is {existing.status}'}
     return {'eligible':o.status in ('delivered','completed'),'reason':'Order must be delivered before return review' if o.status not in ('delivered','completed') else 'Eligible for policy review; final decision depends on vendor policy and inspection'}
+
 def create_return_request(db:Session,buyer_id:int,args:CreateReturnInput,threshold:float=2000):
     o=db.query(Order).filter_by(id=args.order_id,buyer_id=buyer_id).first()
     if not o:return {'error':'Order not found or not owned by current buyer'}
@@ -36,11 +40,11 @@ def create_return_request(db:Session,buyer_id:int,args:CreateReturnInput,thresho
     status='WAITING_FOR_APPROVAL' if args.amount>threshold else 'OPEN'
     c=ReturnCase(order_id=o.id,buyer_id=buyer_id,vendor_id=o.vendor_id,reason=args.reason,amount=args.amount,status=status);db.add(c);db.commit();db.refresh(c)
     return {'case_id':c.id,'status':c.status,'approval_required':status=='WAITING_FOR_APPROVAL'}
+
 def get_vendor_cases(db:Session,vendor_id:int,args:VendorCasesInput):
     q=db.query(ReturnCase).filter_by(vendor_id=vendor_id)
     if args.status:q=q.filter_by(status=args.status)
     return [{'id':c.id,'order_id':c.order_id,'status':c.status,'amount':c.amount,'reason':c.reason} for c in q.order_by(ReturnCase.id.desc()).limit(50)]
-
 
 def search_products(db:Session, question:str, limit:int=100):
     """Simple catalog search; product facts and prices come from the database, not the LLM."""
